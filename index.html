@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新启年工作室 - PE系统开发专家</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 引入粒子效果库 -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        // Tailwind 配置
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#0f172a',
+                            100: '#1e293b',
+                            200: '#334155',
+                            300: '#475569',
+                            400: '#64748b',
+                            500: '#3b82f6', // 核心蓝光
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#0f172a', // 最深色
+                        }
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'glass-float': 'glassFloat 6s ease-in-out infinite',
+                        'glass-pulse': 'glassPulse 4s ease-in-out infinite',
+                        'glass-ripple': 'glassRipple 8s ease-in-out infinite',
+                        'fade-in-up': 'fadeInUp 0.8s ease-out',
+                        'slide-in-right': 'slideInRight 0.8s ease-out',
+                        'bg-flow': 'bgFlow 15s ease infinite',
+                        'light-ray': 'lightRay 8s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        glassFloat: {
+                            '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
+                            '25%': { transform: 'translateY(-8px) rotate(1deg)' },
+                            '50%': { transform: 'translateY(0) rotate(0deg)' },
+                            '75%': { transform: 'translateY(-8px) rotate(-1deg)' },
+                        },
+                        glassPulse: {
+                            '0%, 100%': { opacity: 1, transform: 'scale(1)' },
+                            '50%': { opacity: 0.95, transform: 'scale(1.02)' },
+                        },
+                        glassRipple: {
+                            '0%': { backgroundPosition: '0% 50%' },
+                            '50%': { backgroundPosition: '100% 50%' },
+                            '100%': { backgroundPosition: '0% 50%' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: 0, transform: 'translateY(20px)' },
+                            '100%': { opacity: 1, transform: 'translateY(0)' },
+                        },
+                        slideInRight: {
+                            '0%': { opacity: 0, transform: 'translateX(30px)' },
+                            '100%': { opacity: 1, transform: 'translateX(0)' },
+                        },
+                        bgFlow: {
+                            '0%': { backgroundPosition: '0% 0%' },
+                            '50%': { backgroundPosition: '100% 100%' },
+                            '100%': { backgroundPosition: '0% 0%' },
+                        },
+                        lightRay: {
+                            '0%, 100%': { opacity: 0.1, transform: 'translateX(0) rotate(0deg)' },
+                            '50%': { opacity: 0.2, transform: 'translateX(20px) rotate(2deg)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            /* 液态玻璃核心样式 - 深色版本 */
+            .glass {
+                background: rgba(30, 41, 59, 0.6);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                border: 1px solid rgba(59, 130, 246, 0.1);
+                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+                position: relative;
+                overflow: hidden;
+            }
+            /* 苹果风格局部高光效果 */
+            .glass::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: radial-gradient(
+                    circle at var(--mouse-x) var(--mouse-y),
+                    rgba(59, 130, 246, 0.2),
+                    transparent 40%
+                );
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                pointer-events: none;
+            }
+            .glass:hover::before {
+                opacity: 1;
+            }
+            
+            .glass-dark {
+                background: rgba(15, 23, 42, 0.85);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                border: 1px solid rgba(59, 130, 246, 0.08);
+                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+                position: relative;
+                overflow: hidden;
+            }
+            .glass-dark::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: radial-gradient(
+                    circle at var(--mouse-x) var(--mouse-y),
+                    rgba(59, 130, 246, 0.25),
+                    transparent 40%
+                );
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                pointer-events: none;
+            }
+            .glass-dark:hover::before {
+                opacity: 1;
+            }
+            
+            /* 悬浮效果优化 - 仅轻微位移，无整体发光 */
+            .glass-hover {
+                transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+            }
+            .glass-hover:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 12px 24px 0 rgba(0, 0, 0, 0.3);
+                border-color: rgba(59, 130, 246, 0.2);
+            }
+            
+            /* 渐变背景 - 深色+蓝光 */
+            .gradient-bg {
+                background: linear-gradient(135deg, #0f172a, #1e3a8a, #3b82f6);
+                background-size: 200% 200%;
+                position: relative;
+                overflow: hidden;
+            }
+            .gradient-bg::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: radial-gradient(
+                    circle at var(--mouse-x) var(--mouse-y),
+                    rgba(96, 165, 250, 0.3),
+                    transparent 50%
+                );
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                pointer-events: none;
+            }
+            .gradient-bg:hover::before {
+                opacity: 1;
+            }
+            
+            /* 文字渐变 - 降低亮度 */
+            .text-gradient {
+                background-clip: text;
+                -webkit-background-clip: text;
+                color: transparent;
+                background-image: linear-gradient(135deg, #60a5fa, #3b82f6);
+            }
+            
+            /* 波纹效果优化 */
+            .ripple {
+                position: relative;
+                overflow: hidden;
+            }
+            .ripple:after {
+                content: "";
+                position: absolute;
+                top: var(--mouse-y);
+                left: var(--mouse-x);
+                width: 0;
+                height: 0;
+                background: rgba(59, 130, 246, 0.2);
+                border-radius: 50%;
+                transform: translate(-50%, -50%);
+                transition: width 0.6s ease, height 0.6s ease;
+            }
+            .ripple:active:after {
+                width: 400px;
+                height: 400px;
+                opacity: 0;
+            }
+        }
+
+        /* 深色背景核心样式 - 深蓝黑渐变 */
+        body {
+            min-height: 100vh;
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);
+            background-size: 400% 400%;
+            animation: bgFlow 15s ease infinite;
+            position: relative;
+            color: #e2e8f0; /* 更柔和的文字颜色 */
+        }
+
+        /* 粒子容器 */
+        #particles-js {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* 动态光影效果 - 降低亮度 */
+        .light-rays {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            background: 
+                radial-gradient(ellipse at 20% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+                radial-gradient(ellipse at 80% 70%, rgba(30, 64, 216, 0.05) 0%, transparent 40%);
+            animation: lightRay 8s ease-in-out infinite;
+        }
+
+        /* 浮动光球增强 - 降低亮度 */
+        .floating-orbs {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.15; /* 降低光球亮度 */
+            animation: glassFloat 10s ease-in-out infinite;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(96, 165, 250, 0.2));
+        }
+
+        /* 自定义滚动条 - 深色适配 */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.7);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.4);
+            border-radius: 8px;
+            border: 2px solid rgba(15, 23, 42, 0.7);
+            transition: all 0.3s ease;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.6);
+        }
+
+        /* NES Logo 液态玻璃效果 - 优化 */
+        .logo-container {
+            position: relative;
+            perspective: 1000px;
+            overflow: hidden;
+        }
+        .logo-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(
+                circle at var(--mouse-x) var(--mouse-y),
+                rgba(59, 130, 246, 0.3),
+                transparent 50%
+            );
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            border-radius: inherit;
+        }
+        .logo-container:hover::before {
+            opacity: 1;
+        }
+        
+        .logo-inner {
+            transform-style: preserve-3d;
+            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .logo-container:hover .logo-inner {
+            transform: rotateY(15deg) scale(1.05);
+        }
+        .logo-glow {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(148, 163, 184, 0.15) 0%, transparent 70%);
+            border-radius: inherit;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .logo-container:hover .logo-glow {
+            opacity: 1;
+        }
+    </style>
+    <!-- 引入Inter字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="font-inter text-slate-200">
+    <!-- 粒子背景容器 -->
+    <div id="particles-js"></div>
+    
+    <!-- 动态光影效果 -->
+    <div class="light-rays"></div>
+    
+    <!-- 增强版浮动光球 -->
+    <div class="floating-orbs">
+        <div class="orb w-96 h-96 top-1/4 left-1/4" style="animation-delay: 0s"></div>
+        <div class="orb w-80 h-80 bottom-1/4 right-1/4" style="animation-delay: 2s"></div>
+        <div class="orb w-72 h-72 top-1/2 right-1/3" style="animation-delay: 4s"></div>
+        <div class="orb w-64 h-64 bottom-1/3 left-1/5" style="animation-delay: 6s"></div>
+        <div class="orb w-56 h-56 top-1/3 right-1/5" style="animation-delay: 8s"></div>
+    </div>
+
+    <!-- 导航栏 - 液态玻璃效果 -->
+    <nav class="fixed top-0 left-0 w-full z-50 glass transition-all duration-500 py-4">
+        <div class="container mx-auto px-4 md:px-8">
+            <div class="flex justify-between items-center">
+                <!-- Logo区域 -->
+                <div class="flex items-center gap-3">
+                    <div class="logo-container w-12 h-12 rounded-xl glass-dark flex items-center justify-center">
+                        <div class="logo-inner">
+                            <span class="text-xl font-bold text-white tracking-wider">NES</span>
+                        </div>
+                        <div class="logo-glow"></div>
+                    </div>
+                    <span class="text-xl font-semibold text-gradient">新启年工作室</span>
+                </div>
+                
+                <!-- 桌面端导航 -->
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="#home" class="text-slate-300 hover:text-white transition-colors relative group">
+                        首页
+                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                    <a href="#products" class="text-slate-300 hover:text-white transition-colors relative group">
+                        PE系统作品
+                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                    <a href="#resources" class="text-slate-300 hover:text-white transition-colors relative group">
+                        资源中心
+                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                    <a href="#contact" class="text-slate-300 hover:text-white transition-colors relative group">
+                        关于我们
+                        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 transition-all duration-300 group-hover:w-full"></span>
+                    </a>
+                </div>
+                
+                <!-- 移动端菜单按钮 -->
+                <button class="md:hidden text-xl glass-dark p-2 rounded-lg ripple" id="menuBtn">
+                    <i class="fa fa-bars"></i>
+                </button>
+            </div>
+            
+            <!-- 移动端菜单 -->
+            <div id="mobileMenu" class="hidden md:hidden mt-4 glass-dark rounded-xl p-4 animate-fade-in-up">
+                <div class="flex flex-col gap-4">
+                    <a href="#home" class="py-2 px-4 hover:bg-primary-900/20 rounded-lg transition-colors">首页</a>
+                    <a href="#products" class="py-2 px-4 hover:bg-primary-900/20 rounded-lg transition-colors">PE系统作品</a>
+                    <a href="#resources" class="py-2 px-4 hover:bg-primary-900/20 rounded-lg transition-colors">资源中心</a>
+                    <a href="#contact" class="py-2 px-4 hover:bg-primary-900/20 rounded-lg transition-colors">关于我们</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 首页区域 - 液态玻璃主视觉 -->
+    <section id="home" class="pt-40 pb-20 px-4 md:px-8 min-h-screen flex items-center relative z-10">
+        <div class="container mx-auto">
+            <div class="flex flex-col md:flex-row items-center gap-12">
+                <!-- 左侧文字区域 -->
+                <div class="md:w-1/2 animate-fade-in-up">
+                    <h1 class="text-[clamp(2.5rem,5vw,4rem)] font-bold leading-tight mb-6">
+                        <span id="greeting">早上好</span>，<br>
+                        欢迎来到<br>
+                        <span class="text-gradient">新启年工作室</span>
+                    </h1>
+                    <p class="text-lg text-slate-300 mb-8 max-w-lg">
+                        专注于PE系统开发，打造轻量、高效、稳定的PE工具箱，
+                        为您的系统维护与修复提供专业解决方案。
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                        <a href="#products" class="gradient-bg animate-glass-pulse glass-hover ripple px-8 py-3 rounded-full text-white font-medium shadow-lg">
+                            查看作品 <i class="fa fa-arrow-right ml-2"></i>
+                        </a>
+                        <a href="#resources" class="glass glass-hover ripple px-8 py-3 rounded-full text-primary-400 font-medium border border-primary-500/30 hover:bg-primary-900/10">
+                            资源中心 <i class="fa fa-download ml-2"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- 右侧液态玻璃卡片 -->
+                <div class="md:w-1/2 animate-slide-in-right">
+                    <div class="glass-dark rounded-2xl p-8 glass-hover animate-glass-float max-w-md mx-auto">
+                        <!-- Logo展示区 -->
+                        <div class="flex justify-center mb-8">
+                            <div class="logo-container w-32 h-32 rounded-2xl gradient-bg animate-glass-ripple flex items-center justify-center">
+                                <div class="logo-inner">
+                                    <span class="text-4xl font-bold text-white tracking-wider">NES</span>
+                                </div>
+                                <div class="logo-glow"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 文字信息区 -->
+                        <div class="text-center">
+                            <h3 class="text-2xl font-semibold text-white mb-6">专业PE系统开发</h3>
+                            <div class="flex flex-wrap justify-center gap-3 mb-8">
+                                <span class="glass px-4 py-2 rounded-lg text-primary-300 text-sm">ZeroPE</span>
+                                <span class="glass px-4 py-2 rounded-lg text-primary-300 text-sm">TinyPE</span>
+                                <span class="glass px-4 py-2 rounded-lg text-primary-300 text-sm">FarPE</span>
+                            </div>
+                            
+                            <!-- 装饰分割线 -->
+                            <div class="h-1 w-full max-w-xs mx-auto rounded-full bg-gradient-to-r from-transparent via-primary-500 to-transparent"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 产品展示区域 -->
+    <section id="products" class="py-20 px-4 md:px-8 relative z-10">
+        <div class="container mx-auto">
+            <h2 class="text-[clamp(1.8rem,3vw,2.5rem)] font-bold text-center mb-16 text-gradient">我们的PE系统作品</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- ZeroPE -->
+                <div class="glass-dark rounded-2xl p-6 glass-hover animate-fade-in-up">
+                    <div class="flex justify-center mb-6">
+                        <div class="logo-container w-16 h-16 rounded-xl gradient-bg flex items-center justify-center">
+                            <div class="logo-inner">
+                                <i class="fa fa-bolt text-xl text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-semibold text-center mb-3 text-white">ZeroPE</h3>
+                    <p class="text-slate-300 text-center mb-6">轻量级PE系统，极速启动，功能精简实用</p>
+                    <div class="text-center">
+                        <a href="http://pan.frae.xyz:11541/" target="_blank" class="inline-flex items-center text-primary-400 hover:text-primary-300 transition-colors ripple">
+                            下载体验 <i class="fa fa-external-link ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- TinyPE -->
+                <div class="glass-dark rounded-2xl p-6 glass-hover animate-fade-in-up" style="animation-delay: 0.2s">
+                    <div class="flex justify-center mb-6">
+                        <div class="logo-container w-16 h-16 rounded-xl gradient-bg flex items-center justify-center">
+                            <div class="logo-inner">
+                                <i class="fa fa-compress text-xl text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-semibold text-center mb-3 text-white">TinyPE</h3>
+                    <p class="text-slate-300 text-center mb-6">超微型PE系统，极致体积，核心功能完备</p>
+                    <div class="text-center">
+                        <a href="http://pan.frae.xyz:11541/" target="_blank" class="inline-flex items-center text-primary-400 hover:text-primary-300 transition-colors ripple">
+                            下载体验 <i class="fa fa-external-link ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- FarPE -->
+                <div class="glass-dark rounded-2xl p-6 glass-hover animate-fade-in-up" style="animation-delay: 0.4s">
+                    <div class="flex justify-center mb-6">
+                        <div class="logo-container w-16 h-16 rounded-xl gradient-bg flex items-center justify-center">
+                            <div class="logo-inner">
+                                <i class="fa fa-rocket text-xl text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-semibold text-center mb-3 text-white">FarPE</h3>
+                    <p class="text-slate-300 text-center mb-6">功能全面的PE系统，满足专业级运维需求</p>
+                    <div class="text-center">
+                        <a href="http://pan.frae.xyz:11541/" target="_blank" class="inline-flex items-center text-primary-400 hover:text-primary-300 transition-colors ripple">
+                            下载体验 <i class="fa fa-external-link ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 资源中心 -->
+    <section id="resources" class="py-20 px-4 md:px-8 relative z-10">
+        <div class="container mx-auto">
+            <h2 class="text-[clamp(1.8rem,3vw,2.5rem)] font-bold text-center mb-16 text-gradient">资源中心</h2>
+            
+            <div class="max-w-3xl mx-auto glass-dark rounded-2xl p-8 glass-hover">
+                <div class="flex flex-col md:flex-row items-center gap-6 mb-8">
+                    <div class="logo-container w-20 h-20 rounded-xl gradient-bg flex items-center justify-center">
+                        <div class="logo-inner">
+                            <i class="fa fa-cloud-download text-2xl text-white"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 text-white">PE系统资源下载</h3>
+                        <p class="text-slate-300">所有ZeroPE、TinyPE、FarPE版本及相关工具</p>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <a href="http://pan.frae.xyz:11541/" target="_blank" class="glass glass-hover ripple flex items-center justify-between px-6 py-4 rounded-xl">
+                        <span class="text-white">资源网盘</span>
+                        <i class="fa fa-arrow-right text-primary-400"></i>
+                    </a>
+                    <a href="https://space.bilibili.com/3546976190728987?spm_id_from=333.40164.0.0" target="_blank" class="glass glass-hover ripple flex items-center justify-between px-6 py-4 rounded-xl">
+                        <span class="text-white">哔哩哔哩主页</span>
+                        <i class="fa fa-arrow-right text-primary-400"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 关于我们 -->
+    <section id="contact" class="py-20 px-4 md:px-8 relative z-10 pb-32">
+        <div class="container mx-auto">
+            <h2 class="text-[clamp(1.8rem,3vw,2.5rem)] font-bold text-center mb-16 text-gradient">关于我们</h2>
+            
+            <div class="max-w-3xl mx-auto glass-dark rounded-2xl p-8 glass-hover text-center">
+                <p class="text-lg text-slate-300 mb-8">
+                    新启年工作室专注于PE系统的研发与优化，致力于为用户提供轻量、高效、稳定的系统维护工具。
+                    我们的产品ZeroPE、TinyPE、FarPE已服务于众多系统维护工程师和技术爱好者。
+                </p>
+                
+                <div class="flex justify-center gap-8 mb-8">
+                    <a href="https://space.bilibili.com/3546976190728987?spm_id_from=333.40164.0.0" target="_blank" class="logo-container w-16 h-16 rounded-xl gradient-bg flex items-center justify-center glass-hover">
+                        <div class="logo-inner">
+                            <i class="fa fa-play-circle text-2xl text-white"></i>
+                        </div>
+                    </a>
+                    <a href="http://pan.frae.xyz:11541/" target="_blank" class="logo-container w-16 h-16 rounded-xl gradient-bg flex items-center justify-center glass-hover">
+                        <div class="logo-inner">
+                            <i class="fa fa-cloud text-2xl text-white"></i>
+                        </div>
+                    </a>
+                </div>
+                
+                <div class="flex items-center justify-center gap-3 mb-4">
+                    <div class="logo-container w-8 h-8 rounded-lg gradient-bg flex items-center justify-center">
+                        <span class="text-sm font-bold text-white">NES</span>
+                    </div>
+                    <p class="text-slate-400">© 2026 新启年工作室 版权所有</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 回到顶部按钮 -->
+    <button id="backToTop" class="fixed bottom-8 right-8 logo-container w-12 h-12 rounded-full gradient-bg flex items-center justify-center glass-hover opacity-0 transition-all duration-500 z-50">
+        <i class="fa fa-arrow-up text-white"></i>
+    </button>
+
+    <!-- 脚本 -->
+    <script>
+        // 初始化粒子背景
+        particlesJS('particles-js', {
+            "particles": {
+                "number": {
+                    "value": 60, // 减少粒子数量
+                    "density": {
+                        "enable": true,
+                        "value_area": 800
+                    }
+                },
+                "color": {
+                    "value": "#3b82f6"
+                },
+                "shape": {
+                    "type": "circle"
+                },
+                "opacity": {
+                    "value": 0.2, // 降低粒子透明度
+                    "random": true,
+                    "anim": {
+                        "enable": true,
+                        "speed": 0.2,
+                        "opacity_min": 0.05,
+                        "sync": false
+                    }
+                },
+                "size": {
+                    "value": 2, // 减小粒子尺寸
+                    "random": true,
+                    "anim": {
+                        "enable": true,
+                        "speed": 2,
+                        "size_min": 0.1,
+                        "sync": false
+                    }
+                },
+                "line_linked": {
+                    "enable": true,
+                    "distance": 150,
+                    "color": "#3b82f6",
+                    "opacity": 0.1, // 降低连线透明度
+                    "width": 1
+                },
+                "move": {
+                    "enable": true,
+                    "speed": 0.8, // 减慢粒子速度
+                    "direction": "none",
+                    "random": true,
+                    "straight": false,
+                    "out_mode": "out",
+                    "bounce": false,
+                    "attract": {
+                        "enable": false,
+                        "rotateX": 600,
+                        "rotateY": 1200
+                    }
+                }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": {
+                    "onhover": {
+                        "enable": true,
+                        "mode": "grab"
+                    },
+                    "onclick": {
+                        "enable": true,
+                        "mode": "push"
+                    },
+                    "resize": true
+                },
+                "modes": {
+                    "grab": {
+                        "distance": 140,
+                        "line_linked": {
+                            "opacity": 0.2
+                        }
+                    },
+                    "push": {
+                        "particles_nb": 3 // 减少点击生成的粒子数
+                    }
+                }
+            },
+            "retina_detect": true
+        });
+
+        // 鼠标位置跟踪 - 核心：实现苹果风格局部高光
+        document.addEventListener('mousemove', (e) => {
+            // 获取所有需要局部高光的元素
+            const glassElements = document.querySelectorAll('.glass, .glass-dark, .gradient-bg, .logo-container, .ripple');
+            
+            glassElements.forEach(el => {
+                // 获取元素的位置信息
+                const rect = el.getBoundingClientRect();
+                // 计算鼠标在元素内的相对位置
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // 设置CSS变量
+                el.style.setProperty('--mouse-x', `${x}px`);
+                el.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+
+        // 时段问候语
+        function updateGreeting() {
+            const hour = new Date().getHours();
+            const greetingElement = document.getElementById('greeting');
+            const greetings = [
+                { time: [0, 5], text: '夜深了' },
+                { time: [5, 12], text: '早上好' },
+                { time: [12, 14], text: '中午好' },
+                { time: [14, 18], text: '下午好' },
+                { time: [18, 24], text: '晚上好' }
+            ];
+            
+            for (const g of greetings) {
+                if (hour >= g.time[0] && hour < g.time[1]) {
+                    greetingElement.textContent = g.text;
+                    greetingElement.classList.add('animate-glass-pulse');
+                    setTimeout(() => {
+                        greetingElement.classList.remove('animate-glass-pulse');
+                    }, 1000);
+                    break;
+                }
+            }
+        }
+        
+        // 移动端菜单切换
+        const menuBtn = document.getElementById('menuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        menuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+            const icon = menuBtn.querySelector('i');
+            icon.classList.toggle('fa-bars');
+            icon.classList.toggle('fa-times');
+        });
+
+        // 导航栏滚动效果
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            const backToTop = document.getElementById('backToTop');
+            
+            if (window.scrollY > 100) {
+                nav.classList.add('py-2', 'shadow-lg');
+                nav.classList.remove('py-4');
+                backToTop.classList.remove('opacity-0');
+                backToTop.classList.add('opacity-100');
+            } else {
+                nav.classList.add('py-4');
+                nav.classList.remove('py-2', 'shadow-lg');
+                backToTop.classList.add('opacity-0');
+            }
+            
+            // 滚动动画
+            const elements = document.querySelectorAll('.glass-hover');
+            elements.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                const isVisible = rect.top < window.innerHeight - 100 && rect.bottom > 0;
+                if (isVisible) {
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                }
+            });
+        });
+
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 100,
+                        behavior: 'smooth'
+                    });
+                    
+                    // 关闭移动端菜单
+                    if (!mobileMenu.classList.contains('hidden')) {
+                        mobileMenu.classList.add('hidden');
+                        const icon = menuBtn.querySelector('i');
+                        icon.classList.add('fa-bars');
+                        icon.classList.remove('fa-times');
+                    }
+                }
+            });
+        });
+
+        // 回到顶部按钮
+        document.getElementById('backToTop').addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            updateGreeting();
+            setInterval(updateGreeting, 3600000);
+            
+            // 初始化元素样式
+            document.querySelectorAll('.glass-hover').forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+                el.style.transition = 'all 0.8s ease-out';
+            });
+            
+            // 触发一次滚动事件
+            setTimeout(() => {
+                window.dispatchEvent(new Event('scroll'));
+            }, 100);
+        });
+    </script>
+</body>
+</html>
